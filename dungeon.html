@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚔️ 어둠의 던전 v3</title>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #12121a;
+  --bg3: #1a1a26;
+  --border: #2a2a40;
+  --border2: #3a3a58;
+  --text: #c8c8e8;
+  --text-dim: #6868a0;
+  --gold: #f0c040;
+  --gold2: #c89820;
+  --red: #e84040;
+  --red2: #a02020;
+  --green: #40e880;
+  --green2: #208840;
+  --blue: #4080f0;
+  --blue2: #2050a0;
+  --purple: #c040e8;
+  --cyan: #40d8e8;
+  --white: #f0f0ff;
+  --pixel: 'DotGothic16', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; image-rendering: pixelated; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--pixel);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 배경 별 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, #fff4 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 60%, #fff3 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 10%, #fff4 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 40%, #fff2 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 80%, #fff3 0%, transparent 100%),
+    radial-gradient(1px 1px at 20% 85%, #fff2 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 15%, #fff3 0%, transparent 100%),
+    radial-gradient(2px 2px at 45% 70%, #8080ff3 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#app {
+  width: 780px;
+  max-width: 98vw;
+  position: relative;
+  z-index: 1;
+}
+
+/* 화면 전환 */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── 타이틀 화면 ── */
+#title-screen {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.title-logo {
+  font-size: 48px;
+  letter-spacing: 4px;
+  color: var(--gold);
+  text-shadow: 0 0 20px var(--gold2), 0 0 40px #f0804080;
+  animation: flicker 3s infinite;
+  margin-bottom: 8px;
+}
+
+.title-sub {
+  font-size: 14px;
+  color: var(--text-dim);
+  letter-spacing: 8px;
+  margin-bottom: 40px;
+}
+
+.title-art {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--border2);
+  margin-bottom: 40px;
+  white-space: pre;
+}
+
+.name-input-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.name-label {
+  font-size: 13px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+}
+
+#name-input {
+  background: var(--bg2);
+  border: 2px solid var(--border2);
+  color: var(--gold);
+  font-family: var(--pixel);
+  font-size: 18px;
+  padding: 10px 20px;
+  text-align: center;
+  outline: none;
+  width: 240px;
+  letter-spacing: 3px;
+  transition: border-color .2s;
+}
+#name-input:focus { border-color: var(--gold); box-shadow: 0 0 12px var(--gold2); }
+
+.btn {
+  background: var(--bg2);
+  border: 2px solid var(--border2);
+  color: var(--text);
+  font-family: var(--pixel);
+  font-size: 14px;
+  padding: 10px 28px;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all .15s;
+  position: relative;
+  overflow: hidden;
+}
+.btn:hover { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 10px var(--gold2); }
+.btn:active { transform: scale(0.97); }
+.btn.primary { border-color: var(--gold); color: var(--gold); }
+.btn.danger  { border-color: var(--red); color: var(--red); }
+.btn.green   { border-color: var(--green); color: var(--green); }
+.btn.disabled { opacity: .4; pointer-events: none; }
+
+/* ── 메인 게임 ── */
+#game-screen { padding: 12px; }
+
+.game-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px;
+  height: calc(100vh - 24px);
+  max-height: 680px;
+}
+
+/* 상태창 */
+.status-panel {
+  grid-row: 1 / 3;
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel-title {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 3px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.player-name {
+  font-size: 20px;
+  color: var(--gold);
+  text-shadow: 0 0 8px var(--gold2);
+}
+
+.player-level {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.tier-badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 8px;
+  border: 1px solid;
+  margin-top: 4px;
+}
+
+.stat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+}
+
+.bar-wrap {
+  height: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  transition: width .4s ease;
+  position: relative;
+}
+.bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: rgba(255,255,255,0.3);
+}
+
+.bar-hp   { background: var(--green); }
+.bar-hp.low  { background: var(--red); }
+.bar-hp.mid  { background: var(--gold); }
+.bar-exp  { background: var(--blue); }
+.bar-mob  { background: var(--red); }
+
+.bar-text {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-align: right;
+  margin-top: 2px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.stat-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  text-align: center;
+}
+.stat-box .val { font-size: 16px; color: var(--white); }
+.stat-box .key { font-size: 9px; color: var(--text-dim); letter-spacing: 1px; }
+
+.floor-display {
+  text-align: center;
+  padding: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+}
+.floor-num { font-size: 36px; color: var(--cyan); text-shadow: 0 0 12px var(--cyan); }
+.floor-label { font-size: 10px; color: var(--text-dim); letter-spacing: 3px; }
+
+/* 던전 뷰 */
+.dungeon-panel {
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  min-height: 200px;
+}
+
+.dungeon-canvas {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* 타일 배경 */
+.dungeon-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 31px, var(--border) 32px),
+    repeating-linear-gradient(90deg, transparent, transparent 31px, var(--border) 32px);
+  opacity: 0.15;
+}
+
+.battle-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  padding: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+/* 캐릭터 픽셀아트 */
+.sprite {
+  text-align: center;
+  position: relative;
+}
+
+.sprite-art {
+  font-size: 64px;
+  line-height: 1;
+  display: block;
+  filter: drop-shadow(0 0 8px currentColor);
+  transition: transform .15s;
+}
+
+.sprite-name {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 6px;
+  letter-spacing: 1px;
+}
+
+.sprite.attack .sprite-art { animation: atk-anim .3s ease; }
+.sprite.hit    .sprite-art { animation: hit-anim .3s ease; }
+.sprite.shake  .sprite-art { animation: shake-anim .4s ease; }
+
+@keyframes atk-anim {
+  0%   { transform: translateX(0); }
+  40%  { transform: translateX(40px); }
+  100% { transform: translateX(0); }
+}
+@keyframes hit-anim {
+  0%,100% { transform: translateX(0); filter: drop-shadow(0 0 8px currentColor); }
+  25%,75% { transform: translateX(-8px); filter: drop-shadow(0 0 20px red) brightness(2); }
+  50%     { transform: translateX(8px); }
+}
+@keyframes shake-anim {
+  0%,100%{ transform:translateX(0) }
+  20%{ transform:translateX(-10px) }
+  40%{ transform:translateX(10px) }
+  60%{ transform:translateX(-8px) }
+  80%{ transform:translateX(8px) }
+}
+
+.vs-text {
+  font-size: 24px;
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
+/* 데미지 팝업 */
+.dmg-popup {
+  position: absolute;
+  font-size: 22px;
+  font-weight: bold;
+  pointer-events: none;
+  animation: dmg-float 1s forwards;
+  z-index: 10;
+  text-shadow: 0 2px 4px #000;
+}
+@keyframes dmg-float {
+  0%   { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-60px); opacity: 0; }
+}
+
+/* 로그 */
+.log-panel {
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  padding: 10px 14px;
+  overflow-y: auto;
+  max-height: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.log-line {
+  font-size: 12px;
+  line-height: 1.5;
+  animation: log-in .2s ease;
+}
+@keyframes log-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.log-line.dmg   { color: var(--red); }
+.log-line.heal  { color: var(--green); }
+.log-line.info  { color: var(--text-dim); }
+.log-line.gold  { color: var(--gold); }
+.log-line.level { color: var(--cyan); }
+.log-line.boss  { color: var(--purple); }
+.log-line.system{ color: var(--white); }
+
+/* 액션 버튼 */
+.action-panel {
+  grid-column: 2;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 14px 8px;
+  font-family: var(--pixel);
+  font-size: 13px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border: 2px solid var(--border2);
+  background: var(--bg2);
+  color: var(--text);
+  transition: all .15s;
+  text-align: center;
+}
+.action-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.5);
+}
+.action-btn:active:not(:disabled) { transform: translateY(0); }
+.action-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+.action-btn.atk   { border-color: var(--red);    color: var(--red); }
+.action-btn.heavy { border-color: var(--gold);   color: var(--gold); }
+.action-btn.run   { border-color: var(--text-dim); color: var(--text-dim); }
+.action-btn.move  { border-color: var(--cyan);   color: var(--cyan); }
+.action-btn.shop  { border-color: var(--purple); color: var(--purple); }
+
+/* ── 상점 화면 ── */
+#shop-screen {
+  padding: 16px;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.shop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.shop-title { font-size: 20px; color: var(--purple); }
+.shop-gold  { font-size: 16px; color: var(--gold); }
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.shop-item {
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  padding: 12px;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: center;
+}
+.shop-item:hover:not(.cant-buy) { border-color: var(--purple); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(192,64,232,.3); }
+.shop-item.cant-buy { opacity: .4; cursor: not-allowed; }
+
+.shop-item-emoji { font-size: 28px; margin-bottom: 6px; }
+.shop-item-name  { font-size: 12px; color: var(--white); margin-bottom: 4px; }
+.shop-item-stat  { font-size: 10px; color: var(--green); margin-bottom: 6px; }
+.shop-item-price { font-size: 13px; color: var(--gold); }
+
+/* 플래시 오버레이 */
+#flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0;
+}
+
+/* 애니메이션 */
+@keyframes flicker {
+  0%,95%,100% { opacity: 1; }
+  97% { opacity: .7; }
+}
+
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: .6; }
+}
+
+.boss-alert {
+  font-size: 18px;
+  color: var(--red);
+  text-align: center;
+  padding: 10px;
+  border: 2px solid var(--red);
+  animation: pulse 1s infinite;
+  margin-bottom: 8px;
+}
+
+/* 게임오버 */
+#gameover-screen {
+  text-align: center;
+  padding: 60px 20px;
+}
+.go-title { font-size: 48px; color: var(--red); text-shadow: 0 0 20px var(--red2); margin-bottom: 20px; }
+.go-stats { font-size: 14px; color: var(--text-dim); line-height: 2; margin-bottom: 30px; }
+
+/* 클리어 */
+#clear-screen {
+  text-align: center;
+  padding: 60px 20px;
+}
+.clear-title { font-size: 36px; color: var(--gold); text-shadow: 0 0 20px var(--gold2); margin-bottom: 20px; animation: flicker 2s infinite; }
+
+/* 스크롤바 */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.mob-hp-wrap { margin-top: 10px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- 타이틀 -->
+<div id="title-screen" class="screen active">
+  <div class="title-logo">⚔ 어둠의 던전</div>
+  <div class="title-sub">D A R K   D U N G E O N   v 3</div>
+  <div class="title-art">　　🏰　　🏰　　🏰
+　💀　　👹　　🧟
+　　🗡️　　⚔️　　🛡️</div>
+  <div class="name-input-wrap">
+    <div class="name-label">✦ 용사의 이름을 입력하라 ✦</div>
+    <input type="text" id="name-input" maxlength="10" placeholder="이름..." autocomplete="off">
+    <button class="btn primary" onclick="startGame()">▶ 던전에 입장</button>
+  </div>
+  <div style="margin-top:30px; font-size:11px; color:var(--text-dim); line-height:2;">
+    100층까지 도전하라　•　5층마다 보스　•　10층마다 상점 강화
+  </div>
+</div>
+
+<!-- 게임 -->
+<div id="game-screen" class="screen">
+  <div class="game-layout">
+
+    <!-- 상태창 -->
+    <div class="status-panel">
+      <div class="panel-title">STATUS</div>
+      <div>
+        <div class="player-name" id="s-name">-</div>
+        <div class="player-level" id="s-level">Lv.1</div>
+        <div class="tier-badge" id="s-tier" style="color:var(--text-dim);border-color:var(--text-dim)">일반</div>
+      </div>
+
+      <div class="floor-display">
+        <div class="floor-num" id="s-floor">1</div>
+        <div class="floor-label">F L O O R</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-label">HP</div>
+        <div class="bar-wrap"><div class="bar-fill bar-hp" id="bar-hp" style="width:100%"></div></div>
+        <div class="bar-text" id="txt-hp">80 / 80</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">EXP</div>
+        <div class="bar-wrap"><div class="bar-fill bar-exp" id="bar-exp" style="width:0%"></div></div>
+        <div class="bar-text" id="txt-exp">0 / 50</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box"><div class="val" id="s-atk">12</div><div class="key">⚔ ATK</div></div>
+        <div class="stat-box"><div class="val" id="s-def">2</div><div class="key">🛡 DEF</div></div>
+        <div class="stat-box"><div class="val" id="s-gold">30</div><div class="key">💰 GOLD</div></div>
+        <div class="stat-box"><div class="val" id="s-kills">0</div><div class="key">💀 KILL</div></div>
+      </div>
+    </div>
+
+    <!-- 던전 뷰 -->
+    <div class="dungeon-panel">
+      <div class="dungeon-bg"></div>
+      <div class="dungeon-canvas" id="dungeon-view">
+        <div class="battle-area" id="battle-area" style="display:none">
+          <div class="sprite" id="player-sprite">
+            <span class="sprite-art">🧙</span>
+            <span class="sprite-name" id="ps-name">-</span>
+          </div>
+          <div class="vs-text">VS</div>
+          <div class="sprite" id="mob-sprite">
+            <span class="sprite-art" id="mob-emoji">👹</span>
+            <span class="sprite-name" id="mob-name-disp">-</span>
+            <div class="mob-hp-wrap">
+              <div class="bar-wrap" style="width:120px"><div class="bar-fill bar-mob" id="bar-mob" style="width:100%"></div></div>
+              <div class="bar-text" id="txt-mob-hp">-</div>
+            </div>
+          </div>
+        </div>
+        <div id="explore-view" style="text-align:center; padding:20px;">
+          <div style="font-size:80px; margin-bottom:16px;" id="explore-emoji">🏰</div>
+          <div style="font-size:14px; color:var(--text-dim); letter-spacing:2px;" id="explore-msg">던전을 탐색하라...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 로그 -->
+    <div class="log-panel" id="log-panel"></div>
+
+    <!-- 액션 버튼 -->
+    <div class="action-panel" id="action-panel">
+      <button class="action-btn move" onclick="doExplore()">🚶 전진</button>
+      <button class="action-btn shop" onclick="openShop()">🏪 상점</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- 상점 -->
+<div id="shop-screen" class="screen">
+  <div class="shop-header">
+    <div>
+      <div class="shop-title" id="shop-title">🏪 일반 상점</div>
+      <div style="font-size:11px; color:var(--text-dim); margin-top:4px;" id="shop-tier-msg"></div>
+    </div>
+    <div class="shop-gold" id="shop-gold-disp">💰 0G</div>
+  </div>
+  <div class="shop-grid" id="shop-grid"></div>
+  <button class="btn" onclick="closeShop()">← 돌아가기</button>
+</div>
+
+<!-- 게임오버 -->
+<div id="gameover-screen" class="screen">
+  <div class="go-title">☠ GAME OVER</div>
+  <div class="go-stats" id="go-stats"></div>
+  <div style="display:flex; gap:12px; justify-content:center;">
+    <button class="btn danger" onclick="restartGame()">↺ 재도전</button>
+    <button class="btn" onclick="goTitle()">← 타이틀</button>
+  </div>
+</div>
+
+<!-- 클리어 -->
+<div id="clear-screen" class="screen">
+  <div style="font-size:60px; margin-bottom:16px;">👑</div>
+  <div class="clear-title">★ 100층 클리어! ★</div>
+  <div class="go-stats" id="clear-stats"></div>
+  <button class="btn primary" onclick="goTitle()">← 타이틀로</button>
+</div>
+
+</div>
+<div id="flash"></div>
+
+<script>
+// ── 데이터 ──────────────────────────────────────────────────
+const MONSTER_POOLS = {
+  10:  [{n:"슬라임",e:"🟢",hp:18,atk:4,exp:12,gold:6},{n:"고블린",e:"👺",hp:30,atk:7,exp:22,gold:14},{n:"해골 전사",e:"💀",hp:45,atk:11,exp:38,gold:22},{n:"오크 전사",e:"👹",hp:60,atk:15,exp:58,gold:34}],
+  20:  [{n:"독 거미",e:"🕷️",hp:80,atk:20,exp:85,gold:48},{n:"어둠의 기사",e:"🗡️",hp:110,atk:27,exp:130,gold:70},{n:"리치",e:"🧟",hp:150,atk:34,exp:180,gold:95},{n:"불꽃 정령",e:"🔥",hp:130,atk:38,exp:160,gold:85}],
+  30:  [{n:"드래곤",e:"🐉",hp:200,atk:45,exp:260,gold:140},{n:"그림자 암살자",e:"🌑",hp:170,atk:52,exp:240,gold:130},{n:"석화 골렘",e:"🗿",hp:280,atk:38,exp:280,gold:150},{n:"뱀파이어 군주",e:"🧛",hp:220,atk:48,exp:270,gold:145}],
+  50:  [{n:"타락한 천사",e:"👼",hp:350,atk:65,exp:400,gold:220},{n:"심연의 마족",e:"😈",hp:400,atk:70,exp:450,gold:240},{n:"고대 골렘",e:"⚙️",hp:500,atk:58,exp:420,gold:230},{n:"불사 드래곤",e:"☠️",hp:450,atk:75,exp:480,gold:260}],
+  70:  [{n:"혼돈의 마왕",e:"👿",hp:650,atk:95,exp:700,gold:380},{n:"심판의 기사",e:"⚔️",hp:700,atk:90,exp:720,gold:390},{n:"시간의 마녀",e:"🧙",hp:600,atk:105,exp:750,gold:400},{n:"어비스 괴물",e:"👁️",hp:750,atk:88,exp:710,gold:385}],
+  100: [{n:"신의 사도",e:"✨",hp:1000,atk:130,exp:1100,gold:600},{n:"세계 파괴자",e:"💥",hp:1200,atk:120,exp:1200,gold:650},{n:"허무의 군주",e:"🌀",hp:1100,atk:140,exp:1150,gold:620},{n:"운명의 심판자",e:"⚖️",hp:950,atk:150,exp:1300,gold:700}],
+};
+
+const BOSSES = {
+  5:  {n:"던전 수호자",e:"🛡️",hp:75,atk:13,exp:150,gold:80},
+  10: {n:"철벽 골렘",e:"🗿",hp:200,atk:28,exp:300,gold:150},
+  15: {n:"마왕의 사자",e:"😈",hp:320,atk:40,exp:450,gold:230},
+  20: {n:"고대 드래곤",e:"🐉",hp:480,atk:55,exp:600,gold:320},
+  25: {n:"심연의 마족",e:"👿",hp:650,atk:68,exp:800,gold:420},
+  30: {n:"어비스 군주",e:"👁️",hp:850,atk:82,exp:1000,gold:550},
+  35: {n:"타락한 신",e:"👼",hp:1100,atk:98,exp:1300,gold:700},
+  40: {n:"혼돈의 화신",e:"🌀",hp:1400,atk:115,exp:1600,gold:900},
+  45: {n:"불사의 마왕",e:"☠️",hp:1800,atk:132,exp:2000,gold:1100},
+  50: {n:"세계 파괴자",e:"💥",hp:2300,atk:150,exp:2500,gold:1400},
+  55: {n:"운명의 심판자",e:"⚖️",hp:2900,atk:170,exp:3200,gold:1800},
+  60: {n:"시간의 군주",e:"⏳",hp:3600,atk:192,exp:4000,gold:2200},
+  65: {n:"허무의 신",e:"🌑",hp:4500,atk:218,exp:5000,gold:2800},
+  70: {n:"창세의 적",e:"🌌",hp:5500,atk:248,exp:6000,gold:3500},
+  75: {n:"절대 파괴신",e:"💣",hp:6800,atk:280,exp:7500,gold:4500},
+  80: {n:"신의 사형집행자",e:"🔱",hp:8500,atk:315,exp:9000,gold:5500},
+  85: {n:"우주의 심판자",e:"✨",hp:10500,atk:355,exp:11000,gold:6800},
+  90: {n:"태초의 악",e:"😱",hp:13000,atk:400,exp:14000,gold:8500},
+  95: {n:"존재의 끝",e:"🕳️",hp:16000,atk:450,exp:18000,gold:10000},
+  100:{n:"던전의 신",e:"👑",hp:20000,atk:500,exp:25000,gold:15000},
+};
+
+function getShopItems(floor) {
+  const tier = Math.min(Math.floor(floor/10), 9);
+  const base = [
+    {n:"회복 포션",e:"🧪",t:"heal",v:30,p:15,desc:"HP +30"},
+    {n:"강화 포션",e:"⚗️",t:"atk_up",v:5,p:25,desc:"ATK +5"},
+    {n:"철 갑옷",e:"🛡️",t:"def_up",v:5,p:30,desc:"DEF +5"},
+    {n:"불꽃 검",e:"🔥",t:"weapon",v:10,p:50,desc:"ATK +10"},
+  ];
+  const tiers = [
+    [{n:"고급 회복 포션",e:"💊",t:"heal",v:80,p:40,desc:"HP +80"},{n:"생명의 수정",e:"💎",t:"max_hp",v:40,p:60,desc:"MaxHP +40"},{n:"미스릴 갑옷",e:"🔷",t:"def_up",v:12,p:80,desc:"DEF +12"}],
+    [{n:"전설의 검",e:"⚡",t:"weapon",v:25,p:150,desc:"ATK +25"},{n:"드래곤 하트",e:"❤️",t:"max_hp",v:100,p:200,desc:"MaxHP +100"},{n:"광전사의 약",e:"🔴",t:"atk_up",v:15,p:120,desc:"ATK +15"}],
+    [{n:"신의 갑옷",e:"✨",t:"def_up",v:25,p:250,desc:"DEF +25"},{n:"불사의 영약",e:"🌟",t:"heal",v:99999,p:300,desc:"HP 풀회복"},{n:"파멸의 검",e:"🌑",t:"weapon",v:40,p:350,desc:"ATK +40"}],
+    [{n:"심연의 갑옷",e:"🌀",t:"def_up",v:40,p:500,desc:"DEF +40"},{n:"거인의 심장",e:"💗",t:"max_hp",v:200,p:600,desc:"MaxHP +200"},{n:"혼돈의 검",e:"🔮",t:"weapon",v:60,p:700,desc:"ATK +60"}],
+    [{n:"용신의 약",e:"🐲",t:"atk_up",v:30,p:800,desc:"ATK +30"},{n:"영혼 갑옷",e:"👻",t:"def_up",v:55,p:900,desc:"DEF +55"},{n:"신화의 검",e:"🌠",t:"weapon",v:80,p:1000,desc:"ATK +80"}],
+    [{n:"천공의 창",e:"🌤️",t:"weapon",v:100,p:1500,desc:"ATK +100"},{n:"불멸의 갑옷",e:"🔱",t:"def_up",v:70,p:1400,desc:"DEF +70"},{n:"신의 피",e:"🩸",t:"max_hp",v:400,p:1200,desc:"MaxHP +400"}],
+    [{n:"세계수의 정수",e:"🌳",t:"heal",v:99999,p:1000,desc:"HP 풀회복"},{n:"운명의 검",e:"⚖️",t:"weapon",v:130,p:2000,desc:"ATK +130"},{n:"초월의 갑옷",e:"💠",t:"def_up",v:90,p:1800,desc:"DEF +90"}],
+    [{n:"신격의 심장",e:"❤️‍🔥",t:"max_hp",v:800,p:2500,desc:"MaxHP +800"},{n:"절대 파괴자",e:"💣",t:"weapon",v:160,p:3000,desc:"ATK +160"},{n:"허무의 갑옷",e:"🌑",t:"def_up",v:110,p:2800,desc:"DEF +110"}],
+    [{n:"창세의 검",e:"🌌",t:"weapon",v:200,p:4000,desc:"ATK +200"},{n:"불사의 갑옷",e:"♾️",t:"def_up",v:140,p:3500,desc:"DEF +140"},{n:"신의 각성",e:"👁️",t:"atk_up",v:80,p:3000,desc:"ATK +80"}],
+  ];
+  let items = [...base];
+  for(let i=0; i<Math.min(tier, tiers.length); i++) items = items.concat(tiers[i]);
+  return items;
+}
+
+const SHOP_TIER_NAMES = ["일반 상점","고급 상점","희귀 상점","전설 상점","심연 상점","신화 상점","천공 상점","운명 상점","절대 상점","창세 상점"];
+const SHOP_TIER_COLORS = ["#6868a0","#40e880","#40d8e8","#c040e8","#4080f0","#f0c040","#e84040","#c040e8","#e84040","#f0f0ff"];
+
+// ── 플레이어 상태 ─────────────────────────────────────────────
+let P = {};
+let combat = null; // 현재 전투 상태
+let gameState = "explore"; // explore | battle | shop
+
+function initPlayer(name) {
+  P = { name, hp:80, maxHp:80, atk:12, def:2, lv:1, exp:0, gold:30, floor:1, kills:0 };
+}
+
+function expToNext() { return Math.floor(50 * Math.pow(P.lv, 1.4)); }
+
+function gainExp(amount) {
+  P.exp += amount;
+  let leveled = false;
+  while(P.exp >= expToNext()) {
+    P.exp -= expToNext();
+    P.lv++;
+    const hg = 12 + P.lv*3, ag = 2 + Math.floor(P.lv/4), dg = 1 + Math.floor(P.lv/10);
+    P.maxHp += hg; P.hp = Math.min(P.hp+hg, P.maxHp);
+    P.atk += ag; P.def += dg;
+    leveled = true;
+  }
+  return leveled;
+}
+
+// ── UI 업데이트 ───────────────────────────────────────────────
+function updateStatus() {
+  document.getElementById('s-name').textContent = P.name;
+  document.getElementById('s-level').textContent = `Lv.${P.lv}`;
+  document.getElementById('s-floor').textContent = P.floor;
+  document.getElementById('s-atk').textContent = P.atk;
+  document.getElementById('s-def').textContent = P.def;
+  document.getElementById('s-gold').textContent = P.gold;
+  document.getElementById('s-kills').textContent = P.kills;
+
+  const hpRatio = P.hp / P.maxHp;
+  const hpBar = document.getElementById('bar-hp');
+  hpBar.style.width = (hpRatio*100)+'%';
+  hpBar.className = 'bar-fill ' + (hpRatio>0.5?'bar-hp':hpRatio>0.25?'bar-hp mid':'bar-hp low');
+  document.getElementById('txt-hp').textContent = `${P.hp} / ${P.maxHp}`;
+
+  const expRatio = Math.min(P.exp/expToNext(), 1);
+  document.getElementById('bar-exp').style.width = (expRatio*100)+'%';
+  document.getElementById('txt-exp').textContent = `${P.exp} / ${expToNext()}`;
+
+  // 티어
+  const f = P.floor;
+  let tierName, tierColor;
+  if(f>=90){tierName="신화";tierColor="var(--red)"}
+  else if(f>=70){tierName="전설";tierColor="var(--purple)"}
+  else if(f>=50){tierName="영웅";tierColor="var(--gold)"}
+  else if(f>=30){tierName="희귀";tierColor="var(--cyan)"}
+  else if(f>=10){tierName="고급";tierColor="var(--green)"}
+  else{tierName="일반";tierColor="var(--text-dim)"}
+  const tb = document.getElementById('s-tier');
+  tb.textContent = tierName; tb.style.color = tierColor; tb.style.borderColor = tierColor;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function log(msg, type='info') {
+  const panel = document.getElementById('log-panel');
+  const div = document.createElement('div');
+  div.className = `log-line ${type}`;
+  div.textContent = msg;
+  panel.appendChild(div);
+  panel.scrollTop = panel.scrollHeight;
+  // 최대 50줄
+  while(panel.children.length > 50) panel.removeChild(panel.firstChild);
+}
+
+function flash(color) {
+  const el = document.getElementById('flash');
+  el.style.background = color;
+  el.style.opacity = '0.3';
+  setTimeout(()=>{ el.style.transition='opacity .4s'; el.style.opacity='0'; }, 50);
+  setTimeout(()=>{ el.style.transition=''; }, 500);
+}
+
+function showDmg(x, y, text, color) {
+  const el = document.createElement('div');
+  el.className = 'dmg-popup';
+  el.textContent = text;
+  el.style.color = color;
+  el.style.left = x+'px'; el.style.top = y+'px';
+  document.getElementById('dungeon-view').appendChild(el);
+  setTimeout(()=>el.remove(), 1000);
+}
+
+function setButtons(btns) {
+  // btns: [{label, cls, fn}]
+  const panel = document.getElementById('action-panel');
+  panel.innerHTML = '';
+  btns.forEach(b=>{
+    const btn = document.createElement('button');
+    btn.className = `action-btn ${b.cls||''}`;
+    btn.textContent = b.label;
+    if(b.disabled) btn.disabled = true;
+    btn.onclick = b.fn;
+    panel.appendChild(btn);
+  });
+}
+
+// ── 몬스터 풀 ────────────────────────────────────────────────
+function getMonsterPool(floor) {
+  const keys = Object.keys(MONSTER_POOLS).map(Number).sort((a,b)=>a-b);
+  let pool = MONSTER_POOLS[10];
+  for(const k of keys) { if(floor<=k){ pool=MONSTER_POOLS[k]; break; } }
+  return pool;
+}
+
+function scaleMob(mob, floor) {
+  const m = {...mob};
+  const scale = 1 + (floor%10)*0.03;
+  m.hp = Math.floor(m.hp*scale); m.maxHp = m.hp;
+  m.atk = Math.floor(m.atk*scale);
+  m.exp = Math.floor(m.exp*scale);
+  m.gold = Math.floor(m.gold*scale);
+  return m;
+}
+
+function getBoss(floor) {
+  if(BOSSES[floor]) {
+    const b = {...BOSSES[floor]}; b.maxHp=b.hp; return b;
+  }
+  const keys = Object.keys(BOSSES).map(Number).sort((a,b)=>a-b);
+  const prev = Math.max(...keys.filter(k=>k<=floor));
+  const b = {...BOSSES[prev]};
+  const extra = floor-prev;
+  b.hp = Math.floor(b.hp*(1+extra*0.06));
+  b.atk = Math.floor(b.atk*(1+extra*0.04));
+  b.maxHp = b.hp; b.n = `강화된 ${b.n}`;
+  return b;
+}
+
+// ── 탐험 ─────────────────────────────────────────────────────
+function showExploreView() {
+  document.getElementById('battle-area').style.display='none';
+  document.getElementById('explore-view').style.display='block';
+  setButtons([
+    {label:'🚶 전진', cls:'move', fn:doExplore},
+    {label:'🏪 상점', cls:'shop', fn:openShop},
+  ]);
+}
+
+function doExplore() {
+  updateStatus();
+  const roll = Math.random();
+  if(roll < 0.55) {
+    const pool = getMonsterPool(P.floor);
+    const weights = pool.map((_,i)=>i+1);
+    const total = weights.reduce((a,b)=>a+b,0);
+    let r = Math.random()*total, mob = pool[pool.length-1];
+    for(let i=0;i<pool.length;i++){r-=weights[i];if(r<=0){mob=pool[i];break;}}
+    startBattle(scaleMob(mob, P.floor), false);
+  } else if(roll < 0.78) {
+    doEvent();
+  } else {
+    setExploreMsg('🌑', '조용히 지나갔다...');
+    log('아무 일도 없었다...', 'info');
+    setTimeout(checkBossFloor, 800);
+  }
+}
+
+function setExploreMsg(emoji, msg) {
+  document.getElementById('explore-emoji').textContent = emoji;
+  document.getElementById('explore-msg').textContent = msg;
+}
+
+function doEvent() {
+  const events = [
+    ()=>{ const v=rand(20,40+P.floor*3); P.gold+=v; log(`💰 보물 상자! +${v}G`, 'gold'); flash('#f0c04040'); setExploreMsg('💰','보물 상자 발견!'); },
+    ()=>{ const v=rand(20,50+P.floor); const g=Math.min(v,P.maxHp-P.hp); P.hp=Math.min(P.maxHp,P.hp+v); log(`💧 샘물. HP +${g}`, 'heal'); flash('#40e88040'); setExploreMsg('💧','신비한 샘물 발견!'); },
+    ()=>{ const v=rand(10,20+Math.floor(P.floor/3)); P.hp=Math.max(1,P.hp-v); log(`⚠️ 함정! HP -${v}`, 'dmg'); flash('#e8404040'); setExploreMsg('⚠️','함정에 빠졌다!'); updateStatus(); },
+    ()=>{ const items=getShopItems(P.floor); const item=items[Math.floor(Math.random()*items.length)]; applyItem(item); log(`🎁 ${item.n} 획득!`, 'gold'); setExploreMsg('🎁','수상한 상인을 만났다!'); },
+    ()=>{ const v=rand(30,80+P.floor*4); const lv=gainExp(v); log(`⭐ 경험치 +${v}`, 'level'); if(lv) log(`⬆ 레벨 업! Lv.${P.lv}`, 'level'); setExploreMsg('⭐','고대 제단 발견!'); },
+    ()=>{ P.atk+=2; P.def+=1; P.maxHp+=10; P.hp=Math.min(P.hp+10,P.maxHp); log('✨ 신비한 오라. ATK+2 DEF+1 MaxHP+10', 'level'); setExploreMsg('✨','신비한 오라에 휩싸였다!'); },
+  ];
+  events[Math.floor(Math.random()*events.length)]();
+  updateStatus();
+  setTimeout(checkBossFloor, 1000);
+}
+
+function checkBossFloor() {
+  if(P.floor % 5 === 0) {
+    const boss = getBoss(P.floor);
+    log(`💀 BOSS: ${boss.e} ${boss.n} 등장!`, 'boss');
+    setTimeout(()=>startBattle(boss, true), 500);
+  } else {
+    advanceFloor();
+  }
+}
+
+function advanceFloor() {
+  // 100층 보스 격파 = 클리어
+  if(P.floor === 100) {
+    showClear(); return;
+  }
+  P.floor++;
+  updateStatus();
+  showExploreView();
+  setExploreMsg('🏰', `${P.floor}층에 발을 들였다...`);
+}
+
+// ── 전투 ─────────────────────────────────────────────────────
+function startBattle(mob, isBoss) {
+  combat = {...mob, isBoss};
+  document.getElementById('battle-area').style.display='flex';
+  document.getElementById('explore-view').style.display='none';
+  document.getElementById('ps-name').textContent = P.name;
+  document.getElementById('mob-emoji').textContent = mob.e;
+  document.getElementById('mob-name-disp').textContent = mob.n;
+  updateMobHp();
+  if(isBoss) log(`💀 보스 등장! ${mob.e} ${mob.n} (HP:${mob.hp})`, 'boss');
+  else log(`⚔ ${mob.e} ${mob.n} 출현! (HP:${mob.hp})`, 'system');
+  setBattleButtons();
+}
+
+function setBattleButtons() {
+  setButtons([
+    {label:'⚔ 공격', cls:'atk', fn:doAttack},
+    {label:'💥 강공격 (80%)', cls:'heavy', fn:doHeavy},
+    {label:'🏃 도망', cls:'run', fn:doRun},
+  ]);
+}
+
+function updateMobHp() {
+  const r = combat.hp / combat.maxHp;
+  document.getElementById('bar-mob').style.width=(r*100)+'%';
+  document.getElementById('txt-mob-hp').textContent=`${combat.hp}/${combat.maxHp}`;
+}
+
+function animSprite(id, cls) {
+  const el = document.getElementById(id);
+  el.classList.add(cls);
+  setTimeout(()=>el.classList.remove(cls), 500);
+}
+
+async function doAttack() {
+  setButtons([]); // 버튼 잠금
+  const dmg = Math.max(1, P.atk + rand(-3,4));
+  animSprite('player-sprite','attack');
+  await sleep(300);
+  animSprite('mob-sprite','hit');
+  combat.hp -= dmg;
+  log(`⚔ ${dmg} 데미지!`, 'dmg');
+  flash('#e8404040');
+  updateMobHp();
+  await sleep(400);
+  if(combat.hp<=0){ battleWin(); return; }
+  await mobAttack();
+}
+
+async function doHeavy() {
+  setButtons([]);
+  if(Math.random()<0.80) {
+    const dmg = Math.max(1, Math.floor(P.atk*1.9)+rand(0,6));
+    animSprite('player-sprite','attack');
+    await sleep(300);
+    animSprite('mob-sprite','shake');
+    combat.hp -= dmg;
+    log(`💥 강공격! ${dmg} 데미지!`, 'dmg');
+    flash('#f0c04040');
+    updateMobHp();
+    await sleep(400);
+    if(combat.hp<=0){ battleWin(); return; }
+  } else {
+    log('💨 빗나갔다!', 'info');
+    animSprite('player-sprite','shake');
+    await sleep(400);
+  }
+  await mobAttack();
+}
+
+async function doRun() {
+  setButtons([]);
+  if(Math.random()<0.5) {
+    log('🏃 도망쳤다!', 'info');
+    endBattle(); return;
+  }
+  log('❌ 도망 실패!', 'dmg');
+  await mobAttack();
+}
+
+async function mobAttack() {
+  const dmg = Math.max(0, combat.atk - P.def + rand(-4,4));
+  animSprite('mob-sprite','attack');
+  await sleep(300);
+  animSprite('player-sprite','hit');
+  P.hp -= dmg;
+  log(`${combat.e} ${combat.n}의 공격! ${dmg} 데미지! (남은 HP: ${P.hp})`, 'dmg');
+  flash('#a0202080');
+  updateStatus();
+  await sleep(400);
+  if(P.hp<=0){ gameOver(); return; }
+  setBattleButtons();
+}
+
+function battleWin() {
+  P.gold += combat.gold; P.kills++;
+  const lv = gainExp(combat.exp);
+  log(`✅ ${combat.n} 처치! EXP+${combat.exp} 골드+${combat.gold}G`, 'gold');
+  if(lv) log(`⬆ 레벨 업! Lv.${P.lv}`, 'level');
+  flash('#40e88060');
+  updateStatus();
+  if(combat.isBoss) {
+    const bonus = P.floor*8;
+    P.gold += bonus;
+    log(`🎉 보스 격파! 보너스 +${bonus}G`, 'gold');
+    updateStatus();
+    setTimeout(advanceFloor, 800);
+  } else {
+    checkBossFloor();
+  }
+}
+
+function endBattle() {
+  combat = null;
+  showExploreView();
+  updateStatus();
+}
+
+// ── 상점 ─────────────────────────────────────────────────────
+function openShop() {
+  const t = Math.min(Math.floor(P.floor/10), 9);
+  document.getElementById('shop-title').textContent = `🏪 ${SHOP_TIER_NAMES[t]}`;
+  document.getElementById('shop-title').style.color = SHOP_TIER_COLORS[t];
+  document.getElementById('shop-gold-disp').textContent = `💰 ${P.gold}G`;
+
+  const items = getShopItems(P.floor);
+  const grid = document.getElementById('shop-grid');
+  grid.innerHTML = '';
+  items.forEach(item=>{
+    const div = document.createElement('div');
+    div.className = 'shop-item' + (P.gold<item.p?' cant-buy':'');
+    div.innerHTML = `<div class="shop-item-emoji">${item.e}</div>
+      <div class="shop-item-name">${item.n}</div>
+      <div class="shop-item-stat">${item.desc}</div>
+      <div class="shop-item-price">💰 ${item.p}G</div>`;
+    if(P.gold>=item.p) div.onclick=()=>buyItem(item);
+    grid.appendChild(div);
+  });
+  showScreen('shop-screen');
+}
+
+function buyItem(item) {
+  if(P.gold<item.p) return;
+  P.gold -= item.p;
+  applyItem(item);
+  log(`🛒 ${item.n} 구매! ${item.desc}`, 'gold');
+  updateStatus();
+  openShop(); // 새로고침
+}
+
+function applyItem(item) {
+  if(item.t==='heal'){ const g=Math.min(item.v,P.maxHp-P.hp); P.hp=Math.min(P.maxHp,P.hp+item.v); }
+  else if(item.t==='atk_up'||item.t==='weapon') P.atk+=item.v;
+  else if(item.t==='def_up') P.def+=item.v;
+  else if(item.t==='max_hp'){ P.maxHp+=item.v; P.hp+=item.v; }
+}
+
+function closeShop() {
+  showScreen('game-screen');
+  updateStatus();
+}
+
+// ── 게임 시작/종료 ───────────────────────────────────────────
+function startGame() {
+  const name = document.getElementById('name-input').value.trim() || '용사';
+  initPlayer(name);
+  updateStatus();
+  showScreen('game-screen');
+  showExploreView();
+  setExploreMsg('🏰', '어둠의 던전에 발을 들였다...');
+  document.getElementById('log-panel').innerHTML='';
+  log(`${name}이여, 100층의 던전이 기다린다.`, 'system');
+  log('10층마다 상점 강화 / 5층마다 보스', 'info');
+}
+
+function gameOver() {
+  showScreen('gameover-screen');
+  document.getElementById('go-stats').innerHTML =
+    `도달 층: ${P.floor}층<br>레벨: ${P.lv}<br>처치 수: ${P.kills}<br>골드: ${P.gold}G`;
+}
+
+function showClear() {
+  showScreen('clear-screen');
+  document.getElementById('clear-stats').innerHTML =
+    `레벨: ${P.lv}<br>처치 수: ${P.kills}<br>골드: ${P.gold}G<br><br>🎉 진정한 던전의 정복자!`;
+}
+
+function restartGame() {
+  const name = P.name;
+  initPlayer(name);
+  updateStatus();
+  showScreen('game-screen');
+  showExploreView();
+  setExploreMsg('🏰', '재도전! 이번엔 반드시...');
+  document.getElementById('log-panel').innerHTML='';
+  log(`재도전! ${name}`, 'system');
+}
+
+function goTitle() { showScreen('title-screen'); }
+
+// ── 유틸 ─────────────────────────────────────────────────────
+function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// 엔터키로 시작
+document.getElementById('name-input').addEventListener('keydown', e=>{
+  if(e.key==='Enter') startGame();
+});
+</script>
+</body>
+</html>
